@@ -273,7 +273,7 @@ app.post('/login', async (req, res) => {
         }
       });
     } else {
-      res.status(400).json({ msg: 'Password does not match' });
+      res.status(400).json({ message: 'Password does not match' });
     }
   } catch (error) {
     console.error(`Error: ${error.message}`);
@@ -284,6 +284,8 @@ app.post('/login', async (req, res) => {
 //ulr detail here use parme
 app.get('/getRoomDetail/:id', async (req, res) => {
   const id = req.params.id;
+  console.log(`room id ${id}`);
+  
   // Use findById to query the hotel by ID
   const hotel = await Hotel.findById(id);
   try {
@@ -309,10 +311,11 @@ app.get('/getRoomDetail/:id', async (req, res) => {
 app.get('/hotelBooking/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(id);
+    console.log(" hhh", id);
 
     const booking = await Hotel.findById(id);
-
+    console.log(booking,"data");
+    
     res.json(booking);
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while fetching the booking' });
@@ -320,31 +323,68 @@ app.get('/hotelBooking/:id', async (req, res) => {
 });
 
 //booking detail save here 
+// app.post('/hotelBooking', async (req, res) => {
+//   console.log(req.body);
+//   const hotelBooking = HotelBooking({
+//     LoginUSerId: req.body.USerId,
+//     LoginFirstName: req.body.name,
+//     loginLastName: req.body.lastName,
+//     LoginEmail: req.body.email,
+//     //hotel
+//     hotelName: req.body.hotelName,
+//     hotelType: req.body.hotelType,
+//     hotelCity: req.body.city,
+//     hotelPrice: req.body.ResHotelPrice,
+//     hotelNum: req.body.hotelNum,
+//     //user stay detail
+//     fullName: req.body.fullName,
+//     nights: req.body.nights,
+//     age: req.body.age,
+//     gender: req.body.gender,
+//     aadhaarNo: req.body.aadhaarNo,
+//     startDate: req.body.startDate,
+//     endDate: req.body.endDate,
+//     Status: "pending"
+//   });
+//   hotelBooking.save();
+//   res.status(200).json({ message: 'User added successfully!' });
+// });
 app.post('/hotelBooking', async (req, res) => {
-  console.log(req.body);
-  const hotelBooking = HotelBooking({
-    LoginUSerId: req.body.USerId,
-    LoginFirstName: req.body.name,
-    loginLastName: req.body.lname,
-    LoginEmail: req.body.email,
-    //hotel
-    hotelName: req.body.ResHotelName,
-    hotelType: req.body.ResHotelType,
-    hotelCity: req.body.ResCity,
-    hotelPrice: req.body.ResHotelPrice,
-    hotelNum: req.body.ResHotelNum,
-    //user stay detail
-    fullName: req.body.fullName,
-    nights: req.body.nights,
-    age: req.body.age,
-    gender: req.body.gender,
-    aadhaarNo: req.body.aadhaarNo,
-    startDate: req.body.startDate,
-    endDate: req.body.endDate,
-    Status: "pending"
-  });
-  hotelBooking.save();
-  res.status(200).json({ message: 'User added successfully!' });
+  try {
+    console.log('Booking Data Received:', req.body);
+
+    const hotelBooking = new HotelBooking({
+      
+      // User Details
+      LoginUSerId: req.body.userId,
+      LoginFirstName: req.body.name,
+      loginLastName: req.body.lastName,
+      LoginEmail: req.body.email,
+
+      // Hotel Details
+      hotelName: req.body.hotelName,
+      hotelType: req.body.hotelType,
+      hotelCity: req.body.city,
+      hotelPrice: req.body.hotelPrice, // Fixed field name
+      hotelNum: req.body.hotelNum,
+
+      // Stay Details
+      fullName: req.body.fullName,
+      nights: req.body.nights,
+      age: req.body.age,
+      gender: req.body.gender,
+      aadhaarNo: req.body.aadhaarNo,
+      startDate: req.body.startDate,
+      endDate: req.body.endDate,
+      Status: 'pending', // Default status
+    });
+
+    await hotelBooking.save();
+    res.status(200).json({ message: 'User added successfully!' });
+  } catch (error) {
+    console.error('Error saving booking:', error);
+    res.status(500).json({ message: 'An error occurred while saving the booking.' });
+  }
 });
 
 
@@ -370,18 +410,50 @@ app.get('/seeOnwerToStatus', async (req, res) => {
   }
 });
 
-//update status 
-app.put('/editSatutus', (req, res) => {
-  const  { id } = req.body; 
-  const options = { aisehilikna: true };
-  console.log(id); 
-  HotelBooking.updateOne(
-    {_id: new mongoose.Types.ObjectId(id)}, {$set : {
-      Status : req.body.status
-  }
-}
-).then((user)=>res.json(user)).catch((err)=>res.json(err))
 
+
+// this client side of booking api it will take id of session and send all detail of booking to client use 
+
+
+
+// Get hotel details by ID
+app.get('/getHotelById/:id', (req, res) => {
+  const { id } = req.params;
+
+  HotelBooking.findById(id)
+    .then((hotel) => {
+      if (!hotel) {
+        return res.status(404).json({ message: 'Hotel not found' });
+      }
+      res.json(hotel);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
+    });
+});
+
+// Update hotel status by ID
+app.put('/editSatutus', (req, res) => {
+  const { id, status } = req.body;  // Get id and status from the request body
+
+  // Validate inputs
+  if (!id || !status) {
+    return res.status(400).json({ message: 'ID and Status are required' });
+  }
+
+  // Update the hotel status
+  HotelBooking.updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    { $set: { Status: status } }
+  )
+    .then((result) => {
+      res.json({ message: 'Status updated successfully', result });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ message: 'Error updating status' });
+    });
 });
 
 // Start the server

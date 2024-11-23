@@ -32,7 +32,7 @@ const Header1 = () => {
       <Route path='/contact' element={<Contact />} />
       <Route path='/createAccount' element={<CreateAccount />} />
       <Route path='/Login' element={<Login />} />
-      <Route path='/onwer' element={<Heder />} />
+      <Route path='/owner' element={<Heder />} />
       <Route path='/addRoom' element={<OnwerUpladHotalDetail />} />
       <Route path='/profile' element={ <Profile />} />
       <Route path='/roomDetail/:id' element={ <RoomDetail />} />
